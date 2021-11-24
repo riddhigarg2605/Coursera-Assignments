@@ -1,0 +1,96 @@
+---
+title: "Motor Trend MPG Data Analysis"
+author: "Riddhi Garg"
+date: "November 24, 2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+*Created with knitr*
+
+#### Summary
+The association between transmission type (manual or automated) and miles per gallon was investigated in this report (MPG). The goal of the report was to figure out which transmission type gets the best MPG. For this study, the 'mtcars' dataset was used. According to a t-test comparing automatic and manual transmission automobiles, manual transmission vehicles get 7.245 more MPG than automatic transmission vehicles. The manual transmission contributed less significantly to MPG, with only a 1.81 MPG improvement after fitting multiple linear regressions. Other factors like as vehicle weight, horsepower, and cylinder count have a greater impact on overall MPG.
+
+#### Loading the Data
+Load the dataset and convert categorical variables to factors.
+```{r results='hide', message=FALSE}
+library(ggplot2)
+data(mtcars)
+head(mtcars, n=3)
+dim(mtcars)
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- factor(mtcars$am)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+attach(mtcars)
+```
+
+#### Exploratory Analysis
+**See Appendix Figure I** A box graph comparing the MPG of automatic versus manual transmissions. The graph suggests that automobiles with a manual transmission get significantly more MPG than those with an automatic transmission.
+
+##### Statistical Inference
+T-Test transmission type and MPG
+```{r}
+testResults <- t.test(mpg ~ am)
+testResults$p.value
+```
+The T-Test rejects the null hypothesis that the difference between transmission
+types is 0.  
+```{r}
+testResults$estimate
+```
+The difference estimate between the 2 transmissions is 7.24494 MPG in favor of 
+manual.
+
+##### Regression Analysis
+Fit the full model of the data
+```{r results='hide'}
+fullModelFit <- lm(mpg ~ ., data = mtcars)
+summary(fullModelFit)  # results hidden
+summary(fullModelFit)$coeff  # results hidden
+```
+We can't say which variables are more statistically significant because none of the coefficients have a p-value less than 0.05
+
+Backward selection to determine which variables are most statistically 
+significant
+```{r results='hide'}
+stepFit <- step(fullModelFit)
+summary(stepFit) # results hidden
+summary(stepFit)$coeff # results hidden
+```
+
+There are four variables in the new model (cylinders, horsepower, weight, transmission). This model explains around 87 percent of the variance in MPG, according to the R-squared value of 0.8659. Because the p-values are less than 0.05, they are also statistically significant. According to the equations, increasing the number of cylinders from four to six reduces the MPG by 3.03. Increasing the number of cylinders to eight reduces the MPG by 2.16. MPG drops by 3.21 per 100 horsepower as horsepower is increased. For every 1000 pounds gained, the MPG drops by 2.5. The MPG is increased by 1.81 when using a manual transmission.
+
+#### Residuals & Diagnostics
+Residual Plot
+**See Appendix Figure II**
+
+The plots conclude:
+
+1. The Residuals vs. Fitted plot's unpredictability confirms the notion of independence.
+2. The points of the Normal Q-Q plot that are near to the line indicate that the residual distribution is normal.
+3. The random distribution of the Scale-Location plot validates the constant variance assumption.
+4. The Residuals vs. Leverage determines that there are no outliers because all points are between the 0.05 lines.
+```{r}
+sum((abs(dfbetas(stepFit)))>1)
+```
+
+#### Conclusion
+The MPG differs depending on the transmission type. A manual transmission will give you a modest increase in MPG. When it comes to determining MPG, however, it appears that weight, horsepower, and the number of cylinders are more statistically significant.
+
+### Appendix Figures
+
+#### I
+```{r echo=FALSE}
+  boxplot(mpg ~ am, 
+          xlab="Transmission Type (0 = Automatic, 1 = Manual)", 
+          ylab="MPG",
+          main="MPG by Transmission Type")
+```
+
+#### II
+```{r echo=FALSE}
+par(mfrow = c(2, 2))
+plot(stepFit)
+```
